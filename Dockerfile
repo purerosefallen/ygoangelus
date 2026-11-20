@@ -37,7 +37,9 @@ RUN checkout "$OCGCORE_REPO" "$OCGCORE_REF" /core && cd /core && \
 FROM ${NODE_IMAGE} AS deps
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund
+COPY ci/install-deps.mjs ./ci/install-deps.mjs
+ARG NPM_TARBALL_CACHE=
+RUN node ci/install-deps.mjs
 FROM deps AS test-runtime
 COPY . .
 RUN npm run build

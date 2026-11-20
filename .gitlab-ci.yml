@@ -1,6 +1,7 @@
 stages: [prepare, build, deploy]
 variables:
   GIT_DEPTH: "1"
+  NPM_TARBALL_CACHE: "https://mat-cacher.moenext.com"
 
 prepare:
   stage: prepare
