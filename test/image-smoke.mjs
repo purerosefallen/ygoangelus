@@ -107,6 +107,12 @@ async function trace(root, wasm, port) {
       );
       const finish = await client.call(new P.YGOProAngelusFinish());
       assert.equal(finish.decodeRegistry().generation, 'first');
+      assert(
+        client.events.some((event) =>
+          event.message.includes('late script ran'),
+        ),
+        'Missing Lua callback',
+      );
       assert.equal(await client.closed, 1000);
       return {
         frames,

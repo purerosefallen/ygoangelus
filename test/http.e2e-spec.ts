@@ -1,3 +1,6 @@
+import { CardsService } from '../dist/cards/cards.service.js';
+import { Logger } from '@nestjs/common';
+import { vi } from 'vitest';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, it, expect } from 'vitest';
 import { appFixture } from './app.js';
@@ -49,6 +52,29 @@ describe('resource HTTP API', () => {
       'Example OCG',
     );
   });
+  it('wraps unexpected errors without returning internal exception text', async () => {
+    const log = vi
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => {});
+    const failure = vi
+      .spyOn(env.app.get(CardsService), 'lists')
+      .mockImplementationOnce(() => {
+        throw new Error('internal detail');
+      });
+    try {
+      const response = await get('/lflists').expect(500);
+      expect(response.body).toMatchObject({
+        statusCode: 500,
+        message: 'INTERNAL_SERVER_ERROR',
+        success: false,
+      });
+      expect(response.body.timestamp).toBeDefined();
+    } finally {
+      failure.mockRestore();
+      log.mockRestore();
+    }
+  });
+
   it('lists parsed cards and distinguishes omitted from invalid IDs', async () => {
     const all = (await get('/card-data').expect(200)).body.data;
     expect(all.length).toBe(41);
