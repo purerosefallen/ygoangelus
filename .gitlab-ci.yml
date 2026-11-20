@@ -1,7 +1,6 @@
 stages: [prepare, build, deploy]
 variables:
   GIT_DEPTH: "1"
-  NPM_TARBALL_CACHE: "https://mat-cacher.moenext.com"
 
 prepare:
   stage: prepare
@@ -24,12 +23,16 @@ prepare:
 build-amd64:
   extends: .image
   tags: [docker]
-  variables: { ARCH: amd64 }
+  variables:
+    ARCH: amd64
+    NPM_TARBALL_CACHE: "https://mat-cacher.moenext.com"
 
 build-arm64:
   extends: .image
   tags: [docker-arm]
-  variables: { ARCH: arm64 }
+  variables:
+    ARCH: arm64
+    NPM_TARBALL_CACHE: ""
 
 publish:
   stage: deploy
