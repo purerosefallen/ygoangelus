@@ -44,13 +44,15 @@ publish:
   script:
     - |
       set -eu
-      head=$(git ls-remote origin "refs/heads/$CI_COMMIT_REF_NAME" | cut -f1)
-      if [ -n "$CI_COMMIT_BRANCH" ] && [ "$head" != "$CI_COMMIT_SHA" ]; then
-        echo "A newer revision owns the branch image"
-        exit 0
-      fi
       tags="$CI_COMMIT_REF_SLUG"
-      if [ "$CI_COMMIT_BRANCH" = master ]; then tags="$tags latest"; fi
+      if [ -n "${CI_COMMIT_BRANCH:-}" ]; then
+        head=$(git ls-remote origin "refs/heads/$CI_COMMIT_BRANCH" | cut -f1)
+        if [ "$head" != "$CI_COMMIT_SHA" ]; then
+          echo "A newer revision owns the branch image"
+          exit 0
+        fi
+        if [ "$CI_COMMIT_BRANCH" = master ]; then tags="$tags latest"; fi
+      fi
       for tag in $tags; do
         image="$CI_REGISTRY_IMAGE:$tag"
         docker manifest rm "$image" 2>/dev/null || true
