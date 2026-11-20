@@ -62,7 +62,11 @@ export class CardDataDto {
   }
 }
 export class BanlistDto {
-  @ApiProperty() name: string;
+  @ApiProperty({
+    description:
+      'Unique title for deck checks. Repeated titles gain (2), (3), and so on in load order, skipping titles present in the resources.',
+  })
+  name: string;
   @ApiProperty({ type: 'integer', minimum: 0, maximum: 4294967295 })
   hash: number;
 }
@@ -103,7 +107,8 @@ export class CheckDeckRequestDto {
   @ApiPropertyOptional({
     type: String,
     nullable: true,
-    description: 'Exact banlist title. Omit or use null for basic validation.',
+    description:
+      'Exact name returned by GET /lflists. Omit or use null for basic validation.',
   })
   @IsOptional()
   @IsString()

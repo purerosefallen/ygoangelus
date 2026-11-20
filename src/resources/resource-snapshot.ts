@@ -23,11 +23,18 @@ export class ResourceSnapshot {
     this.lists = loaded.listFiles.flatMap(
       (text) => new YGOProLFList().fromText(text).items,
     );
-    const byName = new Map<string, (typeof this.lists)[number]>();
+    // Reserve literal titles up front, including numbered titles in later files.
+    const originalNames = new Set(this.lists.map((list) => list.name));
+    const nextSuffix = new Map<string, number>();
+    const byName = new Map<string, YGOProLFListItem>();
     for (const list of this.lists) {
-      const other = byName.get(list.name);
-      if (other && other.getHash() !== list.getHash())
-        throw new Error('Conflicting banlist: ' + list.name);
+      const title = list.name;
+      if (byName.has(title)) {
+        let suffix = nextSuffix.get(title) ?? 2;
+        while (originalNames.has(`${title} (${suffix})`)) suffix++;
+        list.name = `${title} (${suffix})`;
+        nextSuffix.set(title, suffix + 1);
+      }
       byName.set(list.name, list);
     }
     this.byName = byName;
