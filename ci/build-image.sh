@@ -2,7 +2,7 @@
 set -eu
 build() {
   docker build --build-arg SCRIPT_REPO --build-arg SCRIPT_REF --build-arg YGOPRO_REPO --build-arg YGOPRO_REF \
-    --build-arg OCGCORE_REPO --build-arg OCGCORE_REF --build-arg BUILD_IMAGE --build-arg NODE_IMAGE "$@" .
+    --build-arg OCGCORE_REPO --build-arg OCGCORE_REF --build-arg GIT_IMAGE --build-arg BUILD_IMAGE --build-arg NODE_IMAGE "$@" .
 }
 image="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$ARCH"
 test_image="angelus-test:$CI_JOB_ID"
