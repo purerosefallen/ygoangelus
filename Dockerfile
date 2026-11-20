@@ -16,8 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     build-essential emscripten uuid-dev libssl-dev unzip && rm -rf /var/lib/apt/lists/*
 COPY ci/checkout.sh /usr/local/bin/checkout
 FROM compiler AS premake
+ARG PREMAKE_REPO=https://github.com/premake/premake-core.git
 ARG PREMAKE_REF=v5.0.0
-RUN checkout https://github.com/premake/premake-core.git "$PREMAKE_REF" /premake && cd /premake && ./Bootstrap.sh && git rev-parse HEAD > /premake.sha
+RUN checkout "$PREMAKE_REPO" "$PREMAKE_REF" /premake && cd /premake && ./Bootstrap.sh && git rev-parse HEAD > /premake.sha
 FROM compiler AS core
 ARG OCGCORE_REPO=https://code.moenext.com/nanahira/ygopro-core.git
 ARG OCGCORE_REF=develop

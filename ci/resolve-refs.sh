@@ -12,6 +12,8 @@ pin_image() {
   docker pull "$1" >&2
   docker image inspect --format '{{index .RepoDigests 0}}' "$1"
 }
+PREMAKE_REPO=${PREMAKE_REPO:-https://github.com/premake/premake-core.git}
+PREMAKE_REF=${PREMAKE_REF:-v5.0.0}
 SCRIPT_REPO=${SCRIPT_REPO:-https://code.moenext.com/nanahira/ygopro-scripts.git}
 YGOPRO_REPO=${YGOPRO_REPO:-https://code.moenext.com/nanahira/ygopro.git}
 OCGCORE_REPO=${OCGCORE_REPO:-https://code.moenext.com/nanahira/ygopro-core.git}
@@ -21,7 +23,7 @@ OCGCORE_REF=$(resolve "$OCGCORE_REPO" "${OCGCORE_REF:-develop}")
 GIT_IMAGE=$(pin_image "${GIT_IMAGE:-alpine/git:v2.52.0}")
 NODE_IMAGE=$(pin_image "${NODE_IMAGE:-node:26-alpine}")
 BUILD_IMAGE=$(pin_image "${BUILD_IMAGE:-debian:trixie-slim}")
-export SCRIPT_REPO YGOPRO_REPO OCGCORE_REPO SCRIPT_REF YGOPRO_REF OCGCORE_REF GIT_IMAGE NODE_IMAGE BUILD_IMAGE
-for name in SCRIPT_REPO YGOPRO_REPO OCGCORE_REPO SCRIPT_REF YGOPRO_REF OCGCORE_REF GIT_IMAGE NODE_IMAGE BUILD_IMAGE; do
+export PREMAKE_REPO PREMAKE_REF SCRIPT_REPO YGOPRO_REPO OCGCORE_REPO SCRIPT_REF YGOPRO_REF OCGCORE_REF GIT_IMAGE NODE_IMAGE BUILD_IMAGE
+for name in PREMAKE_REPO PREMAKE_REF SCRIPT_REPO YGOPRO_REPO OCGCORE_REPO SCRIPT_REF YGOPRO_REF OCGCORE_REF GIT_IMAGE NODE_IMAGE BUILD_IMAGE; do
   printf '%s=%s\n' "$name" "$(printenv "$name")"
 done

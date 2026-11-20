@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 build() {
-  docker build --build-arg SCRIPT_REPO --build-arg SCRIPT_REF --build-arg YGOPRO_REPO --build-arg YGOPRO_REF \
+  docker build --build-arg PREMAKE_REPO --build-arg PREMAKE_REF --build-arg SCRIPT_REPO --build-arg SCRIPT_REF --build-arg YGOPRO_REPO --build-arg YGOPRO_REF \
     --build-arg OCGCORE_REPO --build-arg OCGCORE_REF --build-arg GIT_IMAGE --build-arg BUILD_IMAGE --build-arg NODE_IMAGE "$@" .
 }
 image="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-$ARCH"
