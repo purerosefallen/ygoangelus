@@ -1,0 +1,51 @@
+stages: [prepare, build, deploy]
+variables:
+  GIT_DEPTH: "1"
+
+prepare:
+  stage: prepare
+  tags: [docker]
+  script:
+    - ci/resolve-refs.sh > build-inputs.env
+    - cat build-inputs.env
+  artifacts:
+    paths: [build-inputs.env]
+    reports:
+      dotenv: build-inputs.env
+
+.image:
+  stage: build
+  needs: [prepare]
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script: [ci/build-image.sh]
+
+build-amd64:
+  extends: .image
+  tags: [docker]
+  variables: { ARCH: amd64 }
+
+build-arm64:
+  extends: .image
+  tags: [docker-arm]
+  variables: { ARCH: arm64 }
+
+publish:
+  stage: deploy
+  tags: [docker]
+  needs: [build-amd64, build-arm64]
+  resource_group: angelus-manifest
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+  script:
+    - |
+      set -eu
+      tags="$CI_COMMIT_REF_SLUG"
+      if [ "$CI_COMMIT_BRANCH" = master ]; then tags="$tags latest"; fi
+      for tag in $tags; do
+        image="$CI_REGISTRY_IMAGE:$tag"
+        docker manifest rm "$image" 2>/dev/null || true
+        docker manifest create "$image" "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-amd64" "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA-arm64"
+        docker manifest push --purge "$image"
+        docker manifest inspect "$image"
+      done
