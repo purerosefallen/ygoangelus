@@ -11,7 +11,7 @@ npm run build
 YGOPRO_PATH=/path/to/ygopro npm run start:prod
 ```
 
-A resource root contains `cards.cdb`, `lflist.conf` and the `script` tree. See [the configuration example](config.example.yaml). Environment settings override YAML, which overrides built-in defaults. The server listens on `[::]:3000` by default.
+A resource root contains `cards.cdb`, `lflist.conf` and the `script` tree. See [the configuration example](config.example.yaml). Environment settings override YAML, which overrides built-in defaults. The server listens on `[::]:3001` by default.
 
 | Setting | Default / meaning |
 | --- | --- |

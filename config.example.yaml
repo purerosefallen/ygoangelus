@@ -1,5 +1,5 @@
 host: '::'
-port: 3000
+port: 3001
 YGOPRO_PATH: ['./ygopro']
 EXTRA_SCRIPT_PATH: []
 YGOPRO_RESOURCE_REFRESH_MINUTES: 10

@@ -65,7 +65,7 @@ export function resolveConfig(
     NO_OPENAPI: !!parseBool(v.NO_OPENAPI),
     OCGCORE_DEBUG_LOG: !!parseBool(v.OCGCORE_DEBUG_LOG),
     host: String(v.host ?? '::'),
-    port: integer(v.port, 3000, 0, 65535),
+    port: integer(v.port, 3001, 0, 65535),
   };
 }
 export async function loadConfig() {

@@ -4,7 +4,7 @@ services:
     environment:
       SERVER_TOKEN: smoke
     ports:
-      - "127.0.0.1::3000"
+      - "127.0.0.1::3001"
   smoke:
     image: ${ANGELUS_IMAGE:-ygoangelus:local}
     init: true
