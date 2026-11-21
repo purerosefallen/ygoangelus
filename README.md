@@ -27,11 +27,7 @@ A resource root contains `cards.cdb`, `lflist.conf` and the `script` tree. See [
 
 ## API
 
-- `GET /lflists` returns `data.lists` in load order. Use the returned `name` in deck checks. The first occurrence keeps its title. Later occurrences receive suffixes such as `OCG (2)` and `OCG (3)`, even when their rules are identical. If a resource already defines `OCG (2)`, that title is reserved and numbering skips it.
-- `GET /card-data` returns all parsed cards in ascending code order. `?id=101,202` reads specific codes. Invalid and missing codes are skipped and duplicates are returned once. An empty query value returns an empty array.
-- `POST /check-deck` accepts `deck` (YDKE), optional `lflist`, `rule` and `limits`. Deck legality is in `data.valid` on HTTP 200. Unknown titles return HTTP 404. Invalid requests return HTTP 400.
-- `GET /readyz` is a public readiness probe. `/docs` serves Swagger UI and `/docs-json` serves the OpenAPI document.
-- [Duel WebSocket protocol](docs/websocket.md). A session opens one duel, sends one native process request at a time and can query between batches. Use the published `ygopro-msg-encode@1.4.0` CTOS and STOC registries.
+See the [HTTP API reference](docs/api.md) for resource queries, deck validation, readiness and the OpenAPI document. See the [WebSocket protocol](docs/websocket.md) for duel sessions.
 
 ## Build and verify
 
