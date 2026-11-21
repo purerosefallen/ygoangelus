@@ -16,9 +16,9 @@ A resource root contains `cards.cdb`, `lflist.conf` and the `script` tree. See [
 | Setting | Default / meaning |
 | --- | --- |
 | `YGOPRO_PATH` | `./ygopro`. Supply ordered root paths as a YAML list or comma-separated environment value. |
-| `EXTRA_SCRIPT_PATH` | Additional Lua preload names after `patches/entry.lua`, `special.lua` and `init.lua`. |
-| `YGOPRO_RESOURCE_REFRESH_MINUTES` | 10 minutes. Zero disables the timer. Each duel retains its original CDB, scripts and WASM through a refresh. |
-| `OCGCORE_WASM_PATH` | Explicit WASM override, followed by `DEFAULT_OCGCORE_WASM_PATH`. The image sets the latter to `/app/engine/libocgcore.wasm`. With both empty the wrapper loads its bundled engine. |
+| `EXTRA_SCRIPT_PATH` | Additional Lua preload paths after `./script/patches/entry.lua`, `./script/special.lua` and `./script/init.lua`. Paths like `./special/special.lua` are relative to a resource root. |
+| `YGOPRO_RESOURCE_REFRESH_MINUTES` | Refreshes the CDB, banlists and WASM. An unset, invalid or nonpositive interval uses 10 minutes. Each duel retains the card data and WASM loaded at START. Loose Lua files are read when the core requests them. YPK scripts are loaded at START. |
+| `OCGCORE_WASM_PATH` | Explicit WASM override, followed by `DEFAULT_OCGCORE_WASM_PATH`. The image sets the latter to `/app/engine/libocgcore.wasm`. An empty or missing path falls through to the next source. If both paths are empty or missing, the wrapper loads its bundled engine. |
 | `OCGCORE_DEBUG_LOG` | Mirror core callbacks to local debug logs. All callbacks are delivered to the duel socket. |
 | `DECK_MAIN_MIN`, `DECK_MAIN_MAX`, `DECK_EXTRA_MAX`, `DECK_SIDE_MAX`, `DECK_MAX_COPIES` | 40, 60, 15, 15 and 3. A deck check may override individual limits. |
 | `SERVER_TOKEN` | Empty enables anonymous access. A configured value requires the matching `x-server-token` HTTP header on business requests and WebSocket upgrades. |

@@ -7,6 +7,7 @@ export interface ResourceConfig {
   roots: string[];
   preload: string[];
   wasmPath: string;
+  defaultWasmPath: string;
   refreshMinutes: number;
 }
 export interface DeckLimits {
@@ -47,6 +48,9 @@ export function resolveConfig(
     maxCopies: integer(v.DECK_MAX_COPIES, 3, 0),
   };
   if (limits.minMain > limits.maxMain) throw new Error('Invalid deck limits');
+  const refreshMinutes = Number.parseInt(
+    String(v.YGOPRO_RESOURCE_REFRESH_MINUTES ?? ''),
+  );
   const resources: ResourceConfig = {
     roots: list(v.YGOPRO_PATH ?? './ygopro').map((p) => resolve(p)),
     preload: [
@@ -55,8 +59,12 @@ export function resolveConfig(
       './script/init.lua',
       ...list(v.EXTRA_SCRIPT_PATH),
     ],
-    wasmPath: String(v.OCGCORE_WASM_PATH || v.DEFAULT_OCGCORE_WASM_PATH || ''),
-    refreshMinutes: integer(v.YGOPRO_RESOURCE_REFRESH_MINUTES, 10, 0),
+    wasmPath: String(v.OCGCORE_WASM_PATH || ''),
+    defaultWasmPath: String(v.DEFAULT_OCGCORE_WASM_PATH || ''),
+    refreshMinutes:
+      Number.isFinite(refreshMinutes) && refreshMinutes > 0
+        ? refreshMinutes
+        : 10,
   };
   return {
     resources,

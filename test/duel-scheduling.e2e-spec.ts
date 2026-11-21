@@ -19,8 +19,8 @@ it(
       expect(await live.call(startPacket())).toBeInstanceOf(
         P.YGOProAngelusStartOk,
       );
-      // The normal duel keeps its original script snapshot. This isolated test
-      // generation first yields a real prompt, then occupies the WASM thread.
+      // The normal duel has already preloaded its entry script. The next
+      // duel yields a real prompt and then occupies its WASM thread.
       await writeFile(
         join(env.root, 'script/patches/entry.lua'),
         [
@@ -34,7 +34,6 @@ it(
           'Duel.RegisterEffect(effect,0)',
         ].join('\n'),
       );
-      await env.loader.refresh();
       expect(await stuck.call(startPacket())).toBeInstanceOf(
         P.YGOProAngelusStartOk,
       );

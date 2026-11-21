@@ -7,6 +7,7 @@ import {
 } from 'yuzuthread';
 import {
   createOcgcoreWrapper,
+  DirScriptReaderEx,
   OcgcoreMessageType,
   OcgcoreDuelOptionFlag,
   type OcgcoreWrapper,
@@ -14,7 +15,6 @@ import {
 } from 'koishipro-core.js';
 import * as P from 'ygopro-msg-encode';
 import { CardStorage } from '../resources/card-storage.js';
-import { scriptReader } from '../resources/script-reader.js';
 import type { DuelResources } from '../resources/resource-snapshot.js';
 
 @DefineWorker({ moduleUrl: import.meta.url })
@@ -34,13 +34,14 @@ export class OcgcoreWorker {
   }
 
   private async start(input: P.YGOProAngelusStart, resources: DuelResources) {
+    const scriptReader = await DirScriptReaderEx(...resources.roots);
     const wrapper = (this.wrapper = await createOcgcoreWrapper(
       resources.wasm
         ? { wasmBinary: new Uint8Array(resources.wasm) }
         : undefined,
     ));
     const cards = new CardStorage(resources.cards);
-    wrapper.setScriptReader(scriptReader(resources.scripts));
+    wrapper.setScriptReader(scriptReader);
     wrapper.setCardReader(cards.read);
     wrapper.setMessageHandler((_duel, message, type) => {
       void this.notify(type, message).catch(() => {});

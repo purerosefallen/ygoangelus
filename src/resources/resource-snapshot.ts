@@ -1,11 +1,10 @@
 import type { CardBuffers } from './card-storage.js';
-import type { Scripts } from './script-reader.js';
 import { CardStorage } from './card-storage.js';
 import { YGOProLFList, type YGOProLFListItem } from 'ygopro-lflist-encode';
 
 export interface DuelResources {
   cards: CardBuffers;
-  scripts: Scripts;
+  roots: string[];
   wasm?: SharedArrayBuffer;
   preload: string[];
 }

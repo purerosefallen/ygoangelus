@@ -1,18 +1,31 @@
 import 'reflect-metadata';
+import { Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 import initSqlJs from 'sql.js';
 import { YGOProCdb, type CardDataEntry } from 'ygopro-cdb-encode';
-import { createOcgcoreWrapper } from 'koishipro-core.js';
+import { createOcgcoreWrapper, searchYGOProResource } from 'koishipro-core.js';
 import { DefineWorker, WorkerMethod } from 'yuzuthread';
 import type { ResourceConfig } from '../config/load-config.js';
 import { packCards } from './card-storage.js';
-import { resourceFiles, type ScriptFiles } from './resource-files.js';
-import { snapshotScripts } from './script-reader.js';
 import type { LoadedResources } from './resource-snapshot.js';
+
+async function readWasm(paths: string[]) {
+  for (const path of paths) {
+    if (!path) continue;
+    try {
+      return { path, binary: await readFile(path) };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    }
+  }
+}
 
 @DefineWorker({ moduleUrl: import.meta.url })
 export class ResourceLoadWorker {
+  private readonly logger = new Logger(ResourceLoadWorker.name);
+
   @WorkerMethod()
   async load(
     config: ResourceConfig,
@@ -22,7 +35,6 @@ export class ResourceLoadWorker {
     const dbs: YGOProCdb[] = [];
     const cards = new Map<number, CardDataEntry>();
     const listFiles: string[] = [];
-    const archives: ScriptFiles[] = [];
     const hash = createHash('sha256');
     const add = (b: Uint8Array | string) => {
       const bytes = typeof b === 'string' ? Buffer.from(b) : b;
@@ -30,60 +42,68 @@ export class ResourceLoadWorker {
       hash.update(bytes);
     };
     try {
-      for await (const file of resourceFiles(config.roots)) {
-        if (file.kind === 'packedScripts') {
-          archives.push(file.files);
+      for await (const file of searchYGOProResource(...config.roots)) {
+        const source = file.zipPath
+          ? file.zipPath + ':' + file.path
+          : file.path;
+        if (basename(file.path) === 'lflist.conf') {
+          const bytes = await file.read();
+          listFiles.push(Buffer.from(bytes).toString('utf8'));
+          add(source);
+          add(bytes);
           continue;
         }
-        add(file.name);
-        add(file.bytes);
-        if (file.kind === 'lflist') {
-          listFiles.push(Buffer.from(file.bytes).toString('utf8'));
-          continue;
-        }
-        const db = new YGOProCdb(new SQL.Database(file.bytes));
-        dbs.push(db);
-        for (const card of db.noTexts().step()) {
-          if (
-            card.code > 0 &&
-            card.code <= 0x7fffffff &&
-            !cards.has(card.code)
-          ) {
-            cards.set(card.code, card);
+        if (!file.path.endsWith('.cdb')) continue;
+        let db: YGOProCdb | undefined;
+        try {
+          const bytes = await file.read();
+          db = new YGOProCdb(new SQL.Database(bytes)).noTexts();
+          const entries = Array.from(db.step());
+          for (const card of entries) {
+            if (
+              card.code > 0 &&
+              card.code <= 0x7fffffff &&
+              !cards.has(card.code)
+            ) {
+              cards.set(card.code, card);
+            }
           }
+          add(source);
+          add(bytes);
+          dbs.push(db);
+        } catch (error) {
+          db?.finalize();
+          this.logger.warn('Failed to read ' + source + ': ' + String(error));
         }
       }
-      if (!cards.size)
-        throw new Error('No usable cards in configured resource roots');
       const uniqueCards = Array.from(cards.values());
       for (const db of dbs) db.resolveRuleCode(uniqueCards);
     } finally {
       for (const db of dbs) db.finalize();
     }
-    const scripts = await snapshotScripts(config.roots, archives);
-    add(
-      JSON.stringify([scripts.directories, scripts.archives, config.preload]),
-    );
-    add(new Uint8Array(scripts.bytes));
-    let wasm: SharedArrayBuffer | undefined;
-    if (config.wasmPath) {
-      const binary = await readFile(config.wasmPath);
-      add(binary);
-      wasm = new SharedArrayBuffer(binary.length);
-      new Uint8Array(wasm).set(binary);
+
+    const engine = await readWasm([config.wasmPath, config.defaultWasmPath]);
+    if (engine) {
+      add(engine.path);
+      add(engine.binary);
     }
     const digest = hash.digest('hex');
     if (digest === previousHash) return null;
     const wrapper = await createOcgcoreWrapper(
-      wasm ? { wasmBinary: new Uint8Array(wasm) } : undefined,
+      engine ? { wasmBinary: engine.binary } : undefined,
     );
     wrapper.finalize();
+    let wasm: SharedArrayBuffer | undefined;
+    if (engine) {
+      wasm = new SharedArrayBuffer(engine.binary.length);
+      new Uint8Array(wasm).set(engine.binary);
+    }
     return {
       hash: digest,
       listFiles,
       duel: {
         cards: packCards(cards.values()),
-        scripts,
+        roots: config.roots,
         wasm,
         preload: config.preload,
       },
