@@ -3,9 +3,9 @@ import type { YGOProDeckLike } from 'ygopro-deck-encode';
 import {
   YGOProLFListError,
   YGOProLFListErrorReason,
-  YGOProLFListItem,
 } from 'ygopro-lflist-encode';
 import { OcgcoreCommonConstants } from 'ygopro-msg-encode';
+import type { PreparedLFList } from '../resources/resource-snapshot.js';
 
 // Constants from ygopro
 const { TYPES_EXTRA_DECK, TYPE_TOKEN } = OcgcoreCommonConstants;
@@ -20,7 +20,7 @@ export const checkDeck = (
   reader: CardReaderFn,
   options: {
     ot?: number; // default 5 (AVAIL_OCGTCG)
-    lflist?: YGOProLFListItem;
+    lflist?: PreparedLFList;
     minMain?: number; // default 40
     maxMain?: number; // default 60
     maxExtra?: number; // default 15
@@ -91,10 +91,9 @@ export const checkDeck = (
     return YGOProLFListErrorReason.NOTAVAIL;
   };
 
-  // Count cards by code (using alias if available)
   const cardCount = new Map<number, number>();
-  // Collect all card codes (with alias) for lflist check
-  const allCardCodes: number[] = [];
+  const limitCodes: number[] = [];
+  const creditCodes: number[] = [];
 
   // Helper to process a single card
   const processCard = (
@@ -130,13 +129,15 @@ export const checkDeck = (
       }
     }
 
-    // Count cards (use ruleCode/alias if available)
-    const countCode = cardData.ruleCode || cardData.alias || code;
+    const originalCode = cardData.alias || code;
+    const countCode = cardData.ruleCode || originalCode;
     const count = (cardCount.get(countCode) || 0) + 1;
     cardCount.set(countCode, count);
 
-    // Collect card code for lflist check
-    allCardCodes.push(countCode);
+    if (lflist) {
+      limitCodes.push(originalCode);
+      if (lflist.credits) creditCodes.push(countCode);
+    }
 
     // Check max copies
     if (count > maxCopies) {
@@ -170,13 +171,9 @@ export const checkDeck = (
     }
   }
 
-  // Check forbidden/limited list if provided
-  if (lflist) {
-    const lflistError = lflist.checkDeck(allCardCodes);
-    if (lflistError) {
-      return lflistError;
-    }
-  }
-
-  return null;
+  return (
+    lflist?.limits.checkDeck(limitCodes) ??
+    lflist?.credits?.checkDeck(creditCodes) ??
+    null
+  );
 };
